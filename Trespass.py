@@ -3,14 +3,14 @@
 #
 # Copyright (c) 2005 Jonathan Patrick Giddy
 #
-# Permission is hereby granted, free of charge, to any person obtaining 
+# Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
 # without limitation the rights to use, copy, modify, merge, publish,
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 #
@@ -48,7 +48,7 @@
 # - in Matcher prevch was never set to anything other than its
 # initial value - this means (^|a)b woul dhave succeeded for 'xb'.
 # - addChunk('') at position 0 now returns any matches rather than
-# waiting for at least one character - this also required changing 
+# waiting for at least one character - this also required changing
 # StartAnchor from a transition to a control - however,a match
 # may not occur immediately if a transition may be hiding a higher
 # priority match
@@ -81,7 +81,7 @@ class Matcher:
         if self.debug:
             self.debug(' addMatch(%r, %d, %d)' % (tags, endpos, index))
         if (
-            self.match is None or 
+            self.match is None or
             startpos < self.matchleft or (
                 startpos == self.matchleft and (
                     endpos > self.matchright or (
@@ -126,7 +126,7 @@ class Matcher:
                     i += len(links)
                 else:
                     if node.type is TYPE_CONTROL:
-                        links = node.getMatchedLinks(namespace, 
+                        links = node.getMatchedLinks(namespace,
                                                         self.currpos)
                     else:
                         assert node.type is TYPE_TRANSITION
@@ -188,8 +188,8 @@ class Matcher:
                             # if we've seen a transition node then
                             # we ignore the match for now, since an
                             # earlier transition is another
-                            # zero-length node which may hide a 
-                            # higher priority match                            
+                            # zero-length node which may hide a
+                            # higher priority match
                             i += 1
                         else:
                             self.addMatch(startpos, self.currpos, node,
@@ -201,7 +201,7 @@ class Matcher:
                         nodes[i:i+1] = [(x, namespace.copy())
                                                         for x in links]
                     else:
-                        assert node.type in (TYPE_CHARACTER, 
+                        assert node.type in (TYPE_CHARACTER,
                                                     TYPE_TRANSITION)
                         if node.type is TYPE_TRANSITION:
                             tseen = 1
@@ -317,7 +317,7 @@ class LinkedNode:
     def addLinks(self, links):
         for link in links:
             self.addLink(link)
-    
+
     def addLink(self, link):
         addLink(self.links, link)
 
@@ -337,11 +337,11 @@ class FunctionNode(LinkedNode):
             return ()
 
 class ControlNode(FunctionNode):
-    
+
     type = TYPE_CONTROL
 
 class TagControlNode(LinkedNode):
-    
+
     type = TYPE_CONTROL
 
     def getMatchedLinks(self, namespace, currpos):
@@ -462,14 +462,14 @@ class IterationLoopNode:
         return links
 
 class TransitionNode(FunctionNode):
-    
+
     type = TYPE_TRANSITION
 
 def StartAnchor(namespace, currpos):
     return currpos == 0
 
 class StartAnchorNode(ControlNode):
-    
+
     def __init__(self, links=None):
         ControlNode.__init__(self, StartAnchor, links)
 
@@ -477,12 +477,12 @@ def EndAnchor(prevch, ch):
     return ch == ''
 
 class EndAnchorNode(TransitionNode):
-    
+
     def __init__(self, links=None):
         TransitionNode.__init__(self, EndAnchor, links)
 
 class CharacterNode(FunctionNode):
-    
+
     type = TYPE_CHARACTER
 
 def Always(*args):
@@ -490,7 +490,7 @@ def Always(*args):
 
 def IsAlnum(ch):
     return ch.isalnum()
-    
+
 def IsAlpha(ch):
     return ch.isalpha()
 
@@ -537,7 +537,7 @@ _class_functions = {
 }
 
 class ComplexCharacterComplement(LinkedNode):
-    
+
     type = TYPE_CHARACTER
 
     def __init__(self, characters, classes, links=None):
@@ -558,7 +558,7 @@ class ComplexCharacterComplement(LinkedNode):
         return self.getAllLinks()
 
 class CharacterMapNode:
-    
+
     type = TYPE_CHARACTER
 
     def __init__(self):
@@ -595,7 +595,7 @@ class MutableCharacterMap(CharacterMapNode):
         addLinks(self.default, map.default)
 
 class CharacterMatchNode(CharacterMapNode):
-    
+
     def __init__(self, chars, links):
         self.dict = {}
         links = tuple(links)
@@ -604,7 +604,7 @@ class CharacterMatchNode(CharacterMapNode):
         self.default = ()
 
 class CharacterMatchNotNode(CharacterMapNode):
-    
+
     def __init__(self, chars, links):
         self.dict = {}
         for ch in chars:
@@ -674,7 +674,7 @@ CHOICE = '|'
 BRACE = '{}'
 RELUCTANT = '{}?'
 
-_OCT_MAP = {'0': 0, '1': 1, '2': 2, '3': 3, 
+_OCT_MAP = {'0': 0, '1': 1, '2': 2, '3': 3,
             '4': 4, '5': 5, '6': 6, '7': 7}
 
 _HEX_MAP = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
@@ -704,7 +704,7 @@ _NORMAL_TOKEN = {
 }
 
 def escape(s):
-    for ch in ('\\', '*', '+', '?', '.', '^', '$', '#', 
+    for ch in ('\\', '*', '+', '?', '.', '^', '$', '#',
                 '(', ')', '[', '{'):
         s = s.replace(ch, '\\' + ch)
     return s
@@ -794,7 +794,7 @@ def scan(pattern):
                                 tree[0] is CHAR and tree[1] == '[':
                         tree = (CHAR, ch, tree)
                         # set inclass to true value - we set it to the
-                        # tree pointing to the first colon so we can 
+                        # tree pointing to the first colon so we can
                         # detect [[:] correctly as not a class
                         inclass = tree
                     elif ch == '-' and tree[0] is CHAR:
@@ -806,7 +806,7 @@ def scan(pattern):
                 if ch == ',':
                     if not brstart:
                         raise ParseError('missing value: '
-                                    'expected integer between { and ,' 
+                                    'expected integer between { and ,'
                                     % ch)
                     brace = 2
                     brend = ''
@@ -886,7 +886,7 @@ def scan(pattern):
     return tree
 
 class Pattern:
-    
+
     def __init__(self, pattern=None, match=None):
         self.debug = None
         self.seqno = 0
@@ -902,7 +902,7 @@ class Pattern:
         re.start0.addLinks(self.start0.getAllLinks())
         re.start.addLinks(self.start.getAllLinks())
         return re
-        
+
     def addRegExp(self, pattern, match=None):
         stack = scan(pattern)
         if self.debug:
@@ -977,7 +977,7 @@ class Pattern:
                     self.seqno = seqno + 1
                     name = 'count%d' % seqno
                     exit = IterationExitNode(name, links)
-                    loop = IterationLoopNode(name, lower, upper, 
+                    loop = IterationLoopNode(name, lower, upper,
                                                         exit, greedy)
                     links = self._getatom(token, data, [loop])
                     loop.addLinks(links)
@@ -1024,7 +1024,7 @@ class Pattern:
             else:
                 links = self._getatom(token, data, links)
         return links
-    
+
     # links - the links to which the atom should be connected
     # this list may be mutated, if the list is required by the
     # caller, a copy should be passed
@@ -1047,7 +1047,7 @@ class Pattern:
                         i = ord(ch1)
                         if i > upper:
                             raise ValueError('brace lower limit greater '
-                                        'than upper limit [%s-%s]' 
+                                        'than upper limit [%s-%s]'
                                         % (ch1, ch))
                         while i <= upper:
                             characters.append(chr(i))

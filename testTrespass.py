@@ -5,7 +5,7 @@ import unittest
 import Trespass
 
 class RE0TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         pat.addRegExp(r'', None)
@@ -19,7 +19,7 @@ class RE0TestCase(unittest.TestCase):
     def test2(self):
         match = self.matcher.addChunk('ab')
         assert match == ((0, 0), None), `match`
-    
+
     def test3(self):
         match = self.matcher.addFinal('hello')
         assert match == ((0, 0), None), `match`
@@ -27,9 +27,9 @@ class RE0TestCase(unittest.TestCase):
     def test4(self):
         match = self.matcher.addFinal('llo')
         assert match == ((0, 2), 6), `match`
-        
+
 class RE1TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         pat.addRegExp(r'(ab+)*', 34)
@@ -44,13 +44,13 @@ class RE1TestCase(unittest.TestCase):
         assert match is None, `match`
         match = self.matcher.addChunk('bbabc')
         assert match == ((0, 6), 34), `match`
-    
+
     def test3(self):
         match = self.matcher.addFinal('abbbbabab')
         assert match == ((0, 9), 34), `match`
-        
+
 class RE2TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         #pat.debug = sys.stderr.write
@@ -67,11 +67,11 @@ class RE2TestCase(unittest.TestCase):
         assert match is None, `match`
         match = self.matcher.addChunk('bb2')
         assert match == ((3, 5, 9), 'red'), `match`
-    
+
     def test3(self):
         match = self.matcher.addFinal('01x2g')
         assert match == ((0, 3, 4), 'red'), `match`
-    
+
     def test4(self):
         match = self.matcher.addChunk('Hello, World!\n')
         assert match is None, `match`
@@ -81,7 +81,7 @@ class RE2TestCase(unittest.TestCase):
         assert match == ((17, 19), 'blue'), `match`
 
 class RE3TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         pat.addRegExp(r'hello$', 4)
@@ -100,7 +100,7 @@ class RE3TestCase(unittest.TestCase):
         assert match == ((12, 17), 4), `match`
 
 class RE4TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         pat.addRegExp(r'^test', 4)
@@ -111,7 +111,7 @@ class RE4TestCase(unittest.TestCase):
         assert match == ((0, 4), 4), `match`
 
     def test2(self):
-        #self.assertRaises(Trespass.NoMatchPossible, 
+        #self.assertRaises(Trespass.NoMatchPossible,
         #            self.matcher.addChunk, 'still testing')
         match = self.matcher.addChunk('still testing')
         assert match is None, `match`
@@ -121,13 +121,13 @@ class RE4TestCase(unittest.TestCase):
         assert match is None, `match`
 
 class RE5TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         self.matcher = Trespass.Matcher(pat)
 
     def test1(self):
-        #self.assertRaises(Trespass.NoMatchPossible, 
+        #self.assertRaises(Trespass.NoMatchPossible,
         #            self.matcher.addChunk, 'testing')
         match = self.matcher.addChunk('testing')
         assert match is None, `match`
@@ -137,7 +137,7 @@ class RE5TestCase(unittest.TestCase):
         assert match is None, `match`
 
 class RE6TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         pat.debug = sys.stderr.write
@@ -155,9 +155,9 @@ class RE6TestCase(unittest.TestCase):
     def test3(self):
         match = self.matcher.addChunk('\n    pass')
         assert match == ((0, 1), 56), `match`
-        
+
 class RE7TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         #pat.debug = sys.stderr.write
@@ -177,9 +177,9 @@ class RE7TestCase(unittest.TestCase):
     def test3(self):
         match = self.matcher.addFinal('d!')
         assert match == ((2, 2, 2), 6), `match`
-        
+
 class RE8TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pat = Trespass.Pattern()
         pat.addRegExp(r'a(bc|d+)f', 5)
