@@ -46,19 +46,47 @@
 # any particular length, they get to call addMatch() first.
 # - as a bonus, added reluctant matching for ?,*,+ and {}
 # - in Matcher prevch was never set to anything other than its
-# initial value - this means (^|a)b woul dhave succeeded for 'xb'.
+# initial value - this means (^|a)b would have succeeded for 'xb'.
 # - addChunk('') at position 0 now returns any matches rather than
 # waiting for at least one character - this also required changing
 # StartAnchor from a transition to a control - however,a match
 # may not occur immediately if a transition may be hiding a higher
 # priority match
+#
+# Version 2.0.0
+# Date 4 March 2005
+# - replace return value of addChunk/Final with a match object
+# so we can make further changes without breaking compatibility,
+# particularly re module compatibility
+# - discovered existence of sre.Scanner, which supports simultaneous
+# regexp matching
 
-__version__ = '1.2'
+__version__ = '2.0'
 
 TYPE_MATCH = 0
 TYPE_CONTROL = 1
 TYPE_TRANSITION = 2
 TYPE_CHARACTER = 3
+
+class MatchObject:
+
+    def __init__(self, start, end, tags, value):
+        self._start = start
+        self._end = end
+        self._tags = tags
+        self._value = value
+
+    def start(self):
+        return self._start
+
+    def end(self):
+        return self._end
+
+    def tags(self):
+        return self._tags
+
+    def value(self):
+        return self._value
 
 class Matcher:
 
@@ -71,7 +99,7 @@ class Matcher:
         self.currpos = 0
         start0 = pattern.start0
         assert start0.type is TYPE_CONTROL, start0.type
-        namespace = {'tags': (0,)}
+        namespace = {'tags': ()}
         self.partials = [(0, [(start0, namespace)])]
 
         self.match = None
@@ -79,7 +107,8 @@ class Matcher:
     def addMatch(self, startpos, endpos, match, tags):
         index = match.index()
         if self.debug:
-            self.debug(' addMatch(%r, %d, %d)' % (tags, endpos, index))
+            self.debug(' addMatch(%d, %d, %r, %d)' % (startpos, endpos,
+                                                            tags, index))
         if (
             self.match is None or
             startpos < self.matchleft or (
@@ -99,7 +128,8 @@ class Matcher:
 
     def getMatch(self):
         tags = self.matchtags + (self.matchright,)
-        return tags, self.match.value()
+        return MatchObject(self.matchleft, self.matchright,
+                    self.matchtags, self.match.value())
 
     def addChar(self, ch):
         if self.debug:
@@ -157,7 +187,7 @@ class Matcher:
                             self.partials[0][0] <= self.matchleft, \
                             `(self.partials, self.matchleft)`
             if self.match is None:
-                namespace = {'tags': (self.currpos,)}
+                namespace = {'tags': ()}
                 self.partials.append(
                             (self.currpos, [(self.start, namespace)]))
             else:
@@ -274,7 +304,8 @@ def addLink(links, node):
     if not links:
         # optimisations below are based on merging nodes,
         # so we short-circuit the test here in the case
-        # where there are no nodes to merge
+        # where there are no nodes to merge, which lets
+        # us assume below that links[0] exists
         links.append(node)
     elif isinstance(node, CharacterMapNode):
         # merge together character maps
@@ -352,8 +383,8 @@ class OptionalNode:
 
     type = TYPE_CONTROL
 
-    def __init__(self, greedy):
-        self.greedy = greedy
+    def __init__(self, isgreedy):
+        self.isgreedy = isgreedy
         self.opts = []
         self.links = []
         self.both = None
@@ -377,7 +408,7 @@ class OptionalNode:
     def getAllLinks(self):
         both = self.both
         if both is None:
-            if self.greedy:
+            if self.isgreedy:
                 both = self.opts + self.links
             else:
                 both = self.links + self.opts
@@ -403,14 +434,14 @@ class IterationLoopNode:
 
     type = TYPE_CONTROL
 
-    def __init__(self, name, lower, upper, exit, greedy=1):
+    def __init__(self, name, lower, upper, exit, isgreedy=1):
         self.name = name
         self.lower = lower
         self.upper = upper
         self.exit = exit
         self.links = []
         self.both = None
-        self.greedy = greedy
+        self.isgreedy = isgreedy
 
     def addLinks(self, links):
         for link in links:
@@ -423,7 +454,7 @@ class IterationLoopNode:
     def getAllLinks(self):
         both = self.both
         if both is None:
-            if self.greedy:
+            if self.isgreedy:
                 both = self.links + [self.exit]
             else:
                 both = [self.exit] + self.links
@@ -896,12 +927,12 @@ class Pattern:
             self.addRegExp(pattern, match)
 
     def clone(self):
-        re = Pattern()
-        re.debug = self.debug
-        re.seqno = self.seqno
-        re.start0.addLinks(self.start0.getAllLinks())
-        re.start.addLinks(self.start.getAllLinks())
-        return re
+        pat = Pattern()
+        pat.debug = self.debug
+        pat.seqno = self.seqno
+        pat.start0.addLinks(self.start0.getAllLinks())
+        pat.start.addLinks(self.start.getAllLinks())
+        return pat
 
     def addRegExp(self, pattern, match=None):
         stack = scan(pattern)
@@ -951,10 +982,10 @@ class Pattern:
                     raise ParseError('{ cannot appear at start'
                                                     ' of expression')
                 if token is BRACE:
-                    greedy = 1
+                    isgreedy = 1
                 else:
                     assert token is RELUCTANT
-                    greedy = 0
+                    isgreedy = 0
                 token, data, tree = tree
                 if upper == 0:
                     # {0} or {0,0} skip this node
@@ -962,14 +993,14 @@ class Pattern:
                 elif upper == 1:
                     if lower == 0:
                         # ? or {0,1}
-                        node = OptionalNode(greedy)
+                        node = OptionalNode(isgreedy)
                         node.addLinks(links)
                         links = self._getatom(token, data, links)
                         node.addOptionalLinks(links)
                         links = [node]
                     else:
-                        # {1} or {1,1}
                         assert lower == 1
+                        # {1} or {1,1}
                         links = self._getatom(token, data, links)
                 else:
                     assert upper is None or upper > 1
@@ -978,7 +1009,7 @@ class Pattern:
                     name = 'count%d' % seqno
                     exit = IterationExitNode(name, links)
                     loop = IterationLoopNode(name, lower, upper,
-                                                        exit, greedy)
+                                                        exit, isgreedy)
                     links = self._getatom(token, data, [loop])
                     loop.addLinks(links)
                     links = [loop]
@@ -1009,16 +1040,10 @@ class Pattern:
                     tree = token, data, tree
                     tree = BRACE, (0, 1), tree
             elif token is CHOICE:
-                if 1:
-                    new = []
-                    for t in data:
-                        new.extend(self._comp(t, links))
-                    links = new
-                else:
-                    target = ControlNode(Always)
-                    for t in data:
-                        target.addLinks(self._comp(t, links))
-                    links = [target]
+                new = []
+                for t in data:
+                    new.extend(self._comp(t, links))
+                links = new
             elif token is HASH:
                 links = [TagControlNode(links)]
             else:
@@ -1103,31 +1128,61 @@ class Pattern:
 if __name__ == '__main__':
     # Almost POSIX extended regular expressions, plus:
 
-    # 1. Search multiple patterns simultaneously
+    # 1. Search multiple patterns simultaneously - return
+    # longest-leftmost result - if results have same length
+    # and startpos, pattern added earlier succeeds
     pattern = Pattern()
     pattern.addRegExp(r'(ab+c*)', 1)
     pattern.addRegExp(r'bf(ab+)*', 2)
     pattern.addRegExp(r'^(a(bc)?)*$', 3)
     pattern.addRegExp(r'01x?(ab+)*2', 'red')
-    assert pattern.match('abbbabf') == ((0, 4), 1)
-    assert pattern.match('ddg01abb2s') == ((3, 9), 'red')
+    match = pattern.match('abbbabf')
+    assert (match.start(), match.end(), match.value()) == (0, 4, 1)
+    match = pattern.match('ddg01abb2s')
+    assert (match.start(), match.end(), match.value()) == (3, 9, 'red')
 
     # 2. Add text in chunks
-    pattern = Pattern('hello$', 'done')
+    pattern = Pattern('hello$', 'done')  # 2nd param can be anything
+    pattern.addRegExp('hello', addLinks) # e.g. addLinks is a function
     matcher = Matcher(pattern)
-    assert matcher.addChunk('hello, world') is None
-    assert matcher.addChunk(' and again hello') is None
-    assert matcher.addFinal('') == ((23, 28), 'done')
+    match = matcher.addChunk('hello')
+    # matches second pattern, but may also match first pattern
+    assert match is None
+    match = matcher.addChunk(', world')
+    # we now know text does not match first pattern so match to
+    # second pattern succeeds
+    assert (match.start(), match.end()) == (0, 5)
+    assert match.value() == addLinks
+    # After any successful match we need to create a new Matcher
+    # Indexes start from 0 again
+    matcher = Matcher(pattern)
+    match = matcher.addChunk(' and again hello')
+    # again, no match yet since text may match the first pattern
+    assert match is None
+    match = matcher.addFinal('')
+    # we now know that both patterns match - same start and length
+    # so pattern added first wins
+    assert (match.start(), match.end()) == (11, 16)
+    assert match.value() == 'done'
 
     # 3. Flexible capturing using tags (#)
-    # positions 1,15 are start and end of matching segment
-    # positions 3,9 are start of alphanumeric sequences
-    # positions 8,14 are end of alphanumeric sequences
+    # positions 3,8 are limits of first alphanumeric sequence
+    # positions 9,14 are limits of second alphanumeric sequence
     # Note: use \# to match a literal #
     pattern = Pattern('([[:space:]]+#[[:alnum:]]+#)+!')
-    assert pattern.match('!\t\thello world!') \
-                == ((1, 3, 8, 9, 14, 15), None)
+    match = pattern.match('!\t\thello world!')
+    assert match.start() == 1
+    assert match.end() == 15
+    assert match.tags() == (3, 8, 9, 14)
 
     # 4. Greedy and reluctant matching
-    pattern = Pattern('a{2,4}?#a??#a?#a+#a*')
-    assert pattern.match('aaaaaaaa') == ((0, 2, 2, 3, 8, 8), None)
+    # a{2,4}? matches as few characters as possible (2)
+    # a?? matches as few characters as possible (0)
+    # a? matches as many characters as possible (1)
+    # a* matches as many characters as possible (4)
+    # a+ matches as many characters as possible (1)
+    # (a* gets to be greedy before a+, so a* eats more characters,
+    # however the requirement for a+ to match at least one, in order
+    # that the entire match is successful, causes a* to match 4, not 5)
+    pattern = Pattern('a{2,4}?#a??#a?#a*#a+#')
+    assert pattern.match('aaaaaaaa').tags() == (2, 2, 3, 7, 8)

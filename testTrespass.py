@@ -14,19 +14,19 @@ class RE0TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addFinal('')
-        assert match == ((0, 0), None), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 0), None), `match`
 
     def test2(self):
         match = self.matcher.addChunk('ab')
-        assert match == ((0, 0), None), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 0), None), `match`
 
     def test3(self):
         match = self.matcher.addFinal('hello')
-        assert match == ((0, 0), None), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 0), None), `match`
 
     def test4(self):
         match = self.matcher.addFinal('llo')
-        assert match == ((0, 2), 6), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 2), 6), `match`
 
 class RE1TestCase(unittest.TestCase):
 
@@ -37,17 +37,17 @@ class RE1TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addFinal('')
-        assert match == ((0, 0), 34), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 0), 34), `match`
 
     def test2(self):
         match = self.matcher.addChunk('ab')
         assert match is None, `match`
         match = self.matcher.addChunk('bbabc')
-        assert match == ((0, 6), 34), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 6), 34), `match`
 
     def test3(self):
         match = self.matcher.addFinal('abbbbabab')
-        assert match == ((0, 9), 34), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 9), 34), `match`
 
 class RE2TestCase(unittest.TestCase):
 
@@ -66,11 +66,17 @@ class RE2TestCase(unittest.TestCase):
         match = self.matcher.addChunk('ddf01a')
         assert match is None, `match`
         match = self.matcher.addChunk('bb2')
-        assert match == ((3, 5, 9), 'red'), `match`
+        assert match.start() == 3
+        assert match.end() == 9
+        assert match.tags() == (5,)
+        assert match.value() == 'red'
 
     def test3(self):
         match = self.matcher.addFinal('01x2g')
-        assert match == ((0, 3, 4), 'red'), `match`
+        assert match.start() == 0
+        assert match.end() == 4
+        assert match.tags() == (3,)
+        assert match.value() == 'red'
 
     def test4(self):
         match = self.matcher.addChunk('Hello, World!\n')
@@ -78,7 +84,7 @@ class RE2TestCase(unittest.TestCase):
         match = self.matcher.addChunk('two1x')
         assert match is None, `match`
         match = self.matcher.addChunk('f')
-        assert match == ((17, 19), 'blue'), `match`
+        assert ((match.start(), match.end()), match.value()) == ((17, 19), 'blue'), `match`
 
 class RE3TestCase(unittest.TestCase):
 
@@ -97,7 +103,10 @@ class RE3TestCase(unittest.TestCase):
         match = self.matcher.addChunk('hello')
         assert match is None, `match`
         match = self.matcher.addFinal('')
-        assert match == ((12, 17), 4), `match`
+        assert match.start() == 12
+        assert match.end() == 17
+        assert match.tags() == ()
+        assert match.value() == 4
 
 class RE4TestCase(unittest.TestCase):
 
@@ -108,7 +117,7 @@ class RE4TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('testing')
-        assert match == ((0, 4), 4), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 4), 4), `match`
 
     def test2(self):
         #self.assertRaises(Trespass.NoMatchPossible,
@@ -146,15 +155,15 @@ class RE6TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk(' \n')
-        assert match == ((0, 2), 56), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 2), 56), `match`
 
     def test2(self):
         match = self.matcher.addChunk('\t# comment\n')
-        assert match == ((0, 11), 56), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 11), 56), `match`
 
     def test3(self):
         match = self.matcher.addChunk('\n    pass')
-        assert match == ((0, 1), 56), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 1), 56), `match`
 
 class RE7TestCase(unittest.TestCase):
 
@@ -168,15 +177,24 @@ class RE7TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('Hello, World!')
-        assert match == ((2, 2, 3, 4), 5), `match`
+        assert match.start() == 2
+        assert match.end() == 4
+        assert match.tags() == (2, 3)
+        assert match.value() == 5
 
     def test2(self):
         match = self.matcher.addChunk('o, World!')
-        assert match == ((6, 6, 7), 5), `match`
+        assert match.start() == 6
+        assert match.end() == 7
+        assert match.tags() == (6,)
+        assert match.value() == 5
 
     def test3(self):
         match = self.matcher.addFinal('d!')
-        assert match == ((2, 2, 2), 6), `match`
+        assert match.start() == 2
+        assert match.end() == 2
+        assert match.tags() == (2,)
+        assert match.value() == 6
 
 class RE8TestCase(unittest.TestCase):
 
@@ -187,11 +205,11 @@ class RE8TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('dabcf')
-        assert match == ((1,5), 5), `match`
+        assert ((match.start(), match.end()), match.value()) == ((1,5), 5), `match`
 
     def test2(self):
         match = self.matcher.addChunk('caddddf')
-        assert match == ((1, 7), 5), `match`
+        assert ((match.start(), match.end()), match.value()) == ((1, 7), 5), `match`
 
     def test3(self):
         match = self.matcher.addFinal('abcdf')
@@ -210,7 +228,7 @@ class RE9TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('dabcf')
-        assert match == ((0,0), 5), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0,0), 5), `match`
 
 class RE9BTestCase(unittest.TestCase):
 
@@ -222,7 +240,10 @@ class RE9BTestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('dabcf')
-        assert match == ((0,0,0,0,0,0), 5), `match`
+        assert match.start() == 0
+        assert match.end() == 0
+        assert match.tags() == (0,0,0,0)
+        assert match.value() == 5
 
 class RE10TestCase(unittest.TestCase):
 
@@ -234,17 +255,26 @@ class RE10TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('Hello, World!')
-        assert match == ((0,0,5), 5), `match`
+        assert match.start() == 0
+        assert match.end() == 5
+        assert match.tags() == (0,)
+        assert match.value() == 5
 
     def test2(self):
         match = self.matcher.addChunk('./Hello, World!')
-        assert match == ((1,2,7), 5), `match`
+        assert match.start() == 1
+        assert match.end() == 7
+        assert match.tags() == (2,)
+        assert match.value() == 5
 
     def test3(self):
         match = self.matcher.addChunk('World')
         assert match is None, `match`
         match = self.matcher.addFinal('')
-        assert match == ((0,0,5), 5), `match`
+        assert match.start() == 0
+        assert match.end() == 5
+        assert match.tags() == (0,)
+        assert match.value() == 5
 
 # In PCRE, this is documented as taking exponential time
 # It does for us too
@@ -271,11 +301,11 @@ class RE12TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('\thello\n')
-        assert match == ((0,7), 5), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0,7), 5), `match`
 
     def test2(self):
         match = self.matcher.addChunk('\n\n')
-        assert match == ((0,1), 5), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0,1), 5), `match`
 
     def test3(self):
         match = self.matcher.addFinal('World\n')
@@ -291,7 +321,10 @@ class RE13TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('    hello\n')
-        assert match == ((0, 4, 10), 5), `match`
+        assert match.start() == 0
+        assert match.end() == 10
+        assert match.tags() == (4,)
+        assert match.value() == 5
 
 class RE14TestCase(unittest.TestCase):
 
@@ -307,8 +340,10 @@ class RE14TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addFinal('aaabbb')
-        assert match == ((0, 3, 4), 5), `match`
-
+        assert match.start() == 0
+        assert match.end() == 4
+        assert match.tags() == (3,)
+        assert match.value() == 5
 
 class RE15TestCase(unittest.TestCase):
 
@@ -324,7 +359,10 @@ class RE15TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addFinal('aaabbb')
-        assert match == ((0, 4, 4), 5), `match`
+        assert match.start() == 0
+        assert match.end() == 4
+        assert match.tags() == (4,)
+        assert match.value() == 5
 
 class RE16TestCase(unittest.TestCase):
 
@@ -336,7 +374,7 @@ class RE16TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('')
-        assert match == ((0, 0), 7), `match`
+        assert ((match.start(), match.end()), match.value()) == ((0, 0), 7), `match`
 
 class RE17TestCase(unittest.TestCase):
 
@@ -348,7 +386,10 @@ class RE17TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addChunk('aaaaaaaaaabb')
-        assert match == ((0, 9, 10), 7), `match`
+        assert match.start() == 0
+        assert match.end() == 10
+        assert match.tags() == (9,)
+        assert match.value() == 7
 
 class RE18TestCase(unittest.TestCase):
 
@@ -364,7 +405,10 @@ class RE18TestCase(unittest.TestCase):
         match = self.matcher.addChunk('hello')
         assert match is None, `match`
         match = self.matcher.addFinal('')
-        assert match == ((0, 5, 5), 7), `match`
+        assert match.start() == 0
+        assert match.end() == 5
+        assert match.tags() == (5,)
+        assert match.value() == 7
 
 class RE19TestCase(unittest.TestCase):
 
@@ -377,7 +421,10 @@ class RE19TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addFinal('ffff')
-        assert match == ((0, 0, 4), 7), `match`
+        assert match.start() == 0
+        assert match.end() == 4
+        assert match.tags() == (0,)
+        assert match.value() == 7
 
 class RE20TestCase(unittest.TestCase):
 
@@ -390,7 +437,7 @@ class RE20TestCase(unittest.TestCase):
 
     def test1(self):
         match = self.matcher.addFinal('abcd')
-        assert match == ((1, 3), 7), `match`
+        assert ((match.start(), match.end()), match.value()) == ((1, 3), 7), `match`
 
 
 def suite():
