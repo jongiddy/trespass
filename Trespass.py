@@ -23,7 +23,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-# Email jongiddy@pobox.co.uk
+# Email jongiddy@gmail.com
 # See the end of this file for examples of use
 
 # Version 1.0.0
@@ -60,8 +60,14 @@
 # particularly re module compatibility
 # - discovered existence of sre.Scanner, which supports simultaneous
 # regexp matching
+#
+# Version 2.1.0
+# Date 15 October 2014
+# - update to support Python 3. Tests run OK in Python 2.7 and 3.4
+# - not tested in earlier versions, but definitely won't work for
+# Python earlier than 2.3
 
-__version__ = '2.0'
+__version__ = '2.1'
 
 TYPE_MATCH = 0
 TYPE_CONTROL = 1
@@ -133,7 +139,7 @@ class Matcher:
 
     def addChar(self, ch):
         if self.debug:
-            self.debug('addChar(%s)\n' % `ch`)
+            self.debug('addChar(%s)\n' % repr(ch))
         partials = []
         for startpos, nodes in self.partials:
             if self.match is not None and startpos > self.matchleft:
@@ -185,7 +191,7 @@ class Matcher:
                 # since later partials are deleted
                 assert self.match is None or \
                             self.partials[0][0] <= self.matchleft, \
-                            `(self.partials, self.matchleft)`
+                            repr((self.partials, self.matchleft))
             if self.match is None:
                 namespace = {'tags': ()}
                 self.partials.append(
@@ -581,7 +587,7 @@ class ComplexCharacterComplement(LinkedNode):
             self.funcs.append(_class_functions[c])
 
     def getMatchedLinks(self, ch):
-        if self.dict.has_key(ch):
+        if ch in self.dict:
             return ()
         for func in self.funcs:
             if func(ch):
@@ -615,12 +621,12 @@ class MutableCharacterMap(CharacterMapNode):
 
     def addMap(self, map):
         for ch in self.dict.keys():
-            if map.dict.has_key(ch):
+            if ch in map.dict:
                 addLinks(self.dict[ch], map.dict[ch])
             else:
                 addLinks(self.dict[ch], map.default)
         for ch in map.dict.keys():
-            if not self.dict.has_key(ch):
+            if ch not in self.dict:
                 self.dict[ch] = self.default[:]
                 addLinks(self.dict[ch], map.dict[ch])
         addLinks(self.default, map.default)
@@ -675,7 +681,7 @@ def print_graph(write, links):
                     write(' Character')
             for next in link.getAllLinks():
                 nextid = id(next)
-                if map.has_key(nextid):
+                if nextid in map:
                     idx = map[nextid]
                 else:
                     idx = len(links)
@@ -749,21 +755,21 @@ def scan(pattern):
     octal = 0
     hex = 0
     for ch in pattern:
-        if octal and not _OCT_MAP.has_key(ch):
+        if octal and ch not in _OCT_MAP:
             octal = 0
             tree = (CHAR, chr(value), tree)
         if octal:
             value = 8 * value + _OCT_MAP[ch]
             if octal == 3:
-                if value > 0377:
-                    raise ParseError('octal value greater than 0377')
+                if value > 0o377:
+                    raise ParseError('octal value greater than 377')
                 tree = (CHAR, chr(value), tree)
                 octal = 0
             else:
                 octal += 1
 
         elif hex:
-            if not _HEX_MAP.has_key(ch):
+            if ch not in _HEX_MAP:
                 raise ParseError('expected hexadecimal digit')
             value = 16 * value + _HEX_MAP[ch]
             if hex == 2:
@@ -773,7 +779,7 @@ def scan(pattern):
                 hex += 1
         elif escape:
             escape = 0
-            if _OCT_MAP.has_key(ch):
+            if ch in _OCT_MAP:
                 octal = 1
                 value = _OCT_MAP[ch]
             elif ch == 'x':
@@ -855,7 +861,7 @@ def scan(pattern):
                                 'expected integer after {'
                                 % ch)
             else:
-                assert brace == 2, `brace`
+                assert brace == 2, repr(brace)
                 if ch == '}':
                     brace = 0
                     tree = (BRACE, (brstart, brend), tree)
